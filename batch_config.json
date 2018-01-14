@@ -1,0 +1,19 @@
+{
+    "renderer" : "blender",
+    "blender" : {
+        "path" : "/usr/bin/blender",
+        "args" : [
+            "-b"
+        ],
+        "imagetype" : "EXR",
+        "renderflag" : "-E",
+        "engine" : "CYCLES",
+        "startflag" : "-s",
+        "endflag" : "-e"
+    },
+    "hosts" : [
+        "Arthedain"
+    ],
+    "clusters" : [
+    ]
+}

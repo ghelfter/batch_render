@@ -1,0 +1,54 @@
+This is a batch rendering utility originally written for use in one of the
+production classes at Clemson University, for the Digital Production Arts
+program down in North Charleston, South Carolina.
+
+The project is written in the Perl programming language.
+
+This is the second version of the software, and has some noticeable
+improvements. The code as a whole has been cleaned up, removing a few
+previous bugs, such as the one where I needed a sequential set of machines
+instead of an arbitrary amount. Support for a JSON configuration file has
+also been added to the code. Most of the current problems come from a larger
+technical hurdle that did not exist at the University, which is the lack of
+a shared filesystem. It may be useful to add a flag to assume a shared
+filesystem, instead of just removing it entirely.
+
+This has expanded to a couple of scripts, notably the following:
+    1) batch_render.2.pl
+    2) batch_killall.tcl
+
+There is a configuration file to be placed as
+/home/batch_renderer/batch_render.json. This is local to each machine, and
+will contain things such as the local render directory, and the paths for
+the command line renderers.
+
+Currently, there are a few unfinished portions. They are as follows, and
+are being worked on and will be updated as I finish them:
+    1) The render directories need to be created and instantiated
+       on the set of machines
+    2) A temporary file needs to, instead of being created, be transferred
+       over using an SCP command.
+    3) Confirm that the Blender portion works correctly. This is especially
+       useful for me personally, as Blender is something that I can use
+       commercially without a license.
+    4) Confirmed testing of final renders.
+    5) Setting up of dependent files, such as images, etc. Might set up a
+       scene directory structure to make this easier.
+
+A secondary script will take a configuration file and kill all of the render
+processes on the listed machines. It assumes the local config file in the
+/home/batch_renderer/batch_render.json file as well. This is written in
+expect/Tcl.
+
+Dependencies:
+  System:
+    Perl
+    tcl
+    tcllib
+    expect
+
+  CPAN:
+    IO::Pty
+    JSON::XS
+    Net::OpenSSH
+    Term::ReadKey
