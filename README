@@ -16,6 +16,7 @@ filesystem, instead of just removing it entirely.
 This has expanded to a couple of scripts, notably the following:
     1) batch_render.2.pl
     2) batch_killall.tcl
+    3) batch_clear.pl
 
 There is a configuration file to be placed as
 /home/batch_renderer/batch_render.json. This is local to each machine, and
@@ -39,6 +40,10 @@ A secondary script will take a configuration file and kill all of the render
 processes on the listed machines. It assumes the local config file in the
 /home/batch_renderer/batch_render.json file as well. This is written in
 expect/Tcl.
+
+batch_clear.pl will clear the render directory of all files, which is useful
+if there is a botched render or if the frames have already been collected to
+another directory.
 
 Dependencies:
   System:

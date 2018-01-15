@@ -16,6 +16,20 @@ proc print_usage {} {
     puts "Usage: ./batch_killall.tcl {config_file}"
 }
 
+proc print_help {} {
+    puts "batch_killall:\n"
+    puts "DESCRIPTION"
+    puts "This program is part of a set of utility scripts making a\
+          distributed render queue. These  utilities take JSON configuration\
+          files, and use them to distribute rendering tasks to the set of\
+          machines specified in them.\n"
+    puts "This script uses expect and SSH to connect to the specified hosts,\
+          given the configuration file, and kill all of the running processes\
+          for the specified renderer. This will halt all remaining frames,\
+          but will not delete the frames that have already been completed."
+    puts "\nAUTHOR\nThese scripts were written by Galen Helfter."
+}
+
 proc build_computer {prefix suffix n} {
     return "${prefix}${n}${suffix}"
 }
@@ -31,6 +45,12 @@ proc load_json {filename} {
 if {$argc < 1} {
     print_usage
     exit 1
+} elseif {[string compare [lindex $argv 0] "-h"] == 0} {
+    print_help
+    exit 0
+} elseif {[string compare [lindex $argv 0] "--help"] == 0} {
+    print_help
+    exit 0
 }
 
 # Assert json file exists

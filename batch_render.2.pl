@@ -156,7 +156,7 @@ sub acquire_end ($$)
 
 # Arguments:
 #   1) Filename
-sub load_json_file($)
+sub load_json_file ($)
 {
     open FD, $_[0];
     my $res = "";
@@ -171,9 +171,9 @@ sub load_json_file($)
     return $res;
 }
 
-if(scalar(@ARGV) < 6)
+if (scalar(@ARGV) < 6)
 {
-    print_usage();
+    print_usage;
 }
 else
 {
@@ -227,7 +227,7 @@ else
     {
         $rd_abs = File::Spec->rel2abs($top_rdir);
     }
-    elsif($cmd_struct->{renderer} eq 'blender')
+    elsif ($cmd_struct->{renderer} eq 'blender')
     {
         # Acquire imagetype, engine and renderflag
         $cmd_struct->{rflag} = $parsed_json->{$cmd_struct->{renderer}}
@@ -293,7 +293,7 @@ else
 
     for my $i (0 .. $machine_count-1)
     {
-        my $pid = fork ();
+        my $pid = fork;
         if (not $pid)
         {
             my $n_start = acquire_start($i, \@ranges, $start_frame);
@@ -346,6 +346,6 @@ else
     # Parent process waits for the child processes to finish
     for my $i (0 .. $machine_count-1)
     {
-        wait();
+        wait;
     }
 }
