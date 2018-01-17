@@ -236,6 +236,13 @@ int scp_copy_directory(ssh_session *session, const char *dirpath,
 {
     int retval = SSH_SESSION_GOOD;
 
+    if(session == NULL || dirpath == NULL || result_dirpath == NULL)
+    {
+        retval = SSH_SESSION_NULLPTR;
+        goto CLEANUP;
+    }
+
+CLEANUP:
     return retval;
 }
 
