@@ -1,4 +1,4 @@
-#!/usr/bin/expect
+#!/usr/bin/env tclsh
 
 # ****************************************
 #              Galen Helfter
@@ -11,6 +11,7 @@
 # machines, load the local JSON files, then kill the processes.
 
 package require json
+package require Expect
 
 proc print_usage {} {
     puts "Usage: ./batch_killall.tcl {config_file}"
@@ -92,6 +93,7 @@ send_user "\n"
 log_user 0
 
 set prompt "(%|#|\\$|%\]) $"
+set prompt2 "(\S+)(\s*)\[$%\]"
 
 # Use expect to connect to all the machines
 foreach host $hosts {
@@ -125,7 +127,6 @@ foreach host $hosts {
     }
 
     unset local_json
-    unset json_list
 
     set json_dict [json::json2dict [join $clean_list ""]]
 
