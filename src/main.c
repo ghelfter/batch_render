@@ -11,6 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <libssh/libssh.h>
 #include <cjson/cJSON.h>
 
@@ -55,6 +58,8 @@ int main(int argc, char **argv)
 
     struct cJSON *t1 = NULL;
     struct cJSON *t2 = NULL;
+
+    struct stat st;
 
     /* Clear host list */
     memset(host_list, 0x00, sizeof(char*) * num_hosts);
@@ -123,7 +128,16 @@ int main(int argc, char **argv)
     fclose(fd);
     fd = NULL;
 
-    /* Use cJSON to parse  the JSON */
+    /* Assert that the specified directory exists */
+    if(stat(argv[2], &st) != 0)
+    {
+        fprintf(stderr, "Local directory not found.\n");
+        retcode = 1;
+        goto CLEANUP;
+    }
+
+
+    /* Use cJSON to parse the JSON */
     config_json = cJSON_Parse(config_buffer);
     if(config_json == NULL)
     {
@@ -206,10 +220,11 @@ int main(int argc, char **argv)
     config_cluster = NULL;
     config_clusters = NULL;
 
-    for(i = 0; i < num_hosts; ++i)
-    {
-        fprintf(stdout, "%s\n", host_list[i]);
-    }
+    /*
+     *  ------------------------------
+     *  NOTE - put this inside of a loop
+     *  ------------------------------
+     **/
 
     /* Use current machine just to test */
     ssh_retval = instantiate_ssh_connection(&session, "Arthedain");
@@ -229,8 +244,25 @@ int main(int argc, char **argv)
         goto CLEANUP;
     }
 
-    fwrite(buffer, sizeof(char), buffer_len, stdout);
-    fputc('\n', stdout);
+    /* Acquire render directory from the host */
+    local_config = cJSON_Parse(buffer);
+    if(local_config == NULL)
+    {
+        fprintf(stderr, "Failed to parse hoost JSON file.\n");
+        retcode = 1;
+        goto CLEANUP;
+    }
+
+    t1 = NULL;
+    t1 = cJSON_GetObjectItemCaseSensitive(local_config, "render_directory");
+    if(t1 == NULL || !cJSON_IsString(t1))
+    {
+        fprintf(stderr, "Host JSON file does not fit standard.\n");
+        retcode = 1;
+        goto CLEANUP;
+    }
+
+    fprintf(stdout, "Render directory: %s\n", t1->valuestring);
 
 CLEANUP:
     if(ssh_retval != SSH_SESSION_GOOD)
@@ -252,6 +284,12 @@ CLEANUP:
     {
         cJSON_Delete(config_json);
         config_json = NULL;
+    }
+
+    if(local_config != NULL)
+    {
+        cJSON_Delete(local_config);
+        local_config = NULL;
     }
 
     if(fd != NULL)
@@ -285,20 +323,18 @@ void print_usage(FILE *fout)
 
 void print_help(FILE *fout)
 {
-    fprintf(fout, "batch_collect:\n\nDescription\n");
-    fprintf(fout, "This program is part of a set of utility scripts making");
-    fprintf(fout, " a distributed render queue. These utilities take JSON");
-    fprintf(fout, " configuration files, and use them to distribute");
-    fprintf(fout, " rendering tasks to the set of machines specified in");
-    fprintf(fout, " them.\n\n");
-
-    fprintf(fout, "This program uses libssh and cJSON to parse the config");
-    fprintf(fout, " files and to connect to the given machines. It will");
-    fprintf(fout, " save all of the files in the render directory to the");
-    fprintf(fout, " given directory.\n");
-
-    fprintf(fout, "\nAUTHOR\nThese scripts and programs were written by");
-    fprintf(fout, " Galen Helfter.\n");
+    fprintf(fout, "batch_collect:\n\nDescription\n"
+                  "This program is part of a set of utility scripts making"
+                  " a distributed render queue. These utilities take JSON"
+                  " configuration files, and use them to distribute"
+                  " rendering tasks to the set of machines specified in"
+                  " them.\n\n"
+                  "This program uses libssh and cJSON to parse the config"
+                  " files and to connect to the given machines. It will"
+                  " save all of the files in the render directory to the"
+                  " given directory.\n"
+                  "\nAUTHOR\nThese scripts and programs were written by"
+                  " Galen Helfter.\n");
 }
 
 char* construct_machine_name(const char *prefix, const char *suffix, int n)

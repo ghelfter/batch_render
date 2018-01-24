@@ -9,9 +9,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
+#include <fcntl.h>
 #include <unistd.h> /* Assumes a Unix system */
 #include <termios.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "ssh_session.h"
 
@@ -234,16 +238,86 @@ CLEANUP:
 int scp_copy_directory(ssh_session *session, const char *dirpath,
                        const char *result_dirpath)
 {
-    int retval = SSH_SESSION_GOOD;
+    int retcode = SSH_SESSION_GOOD;
+    int retval = 0;
+    int scp_code = 0;
+    char *intern_buffer = NULL;
+    char *tmp = NULL;
+    ssh_scp scp_session = NULL;
 
     if(session == NULL || dirpath == NULL || result_dirpath == NULL)
     {
-        retval = SSH_SESSION_NULLPTR;
+        retcode = SSH_SESSION_NULLPTR;
         goto CLEANUP;
     }
 
+    /* Init SCP system */
+    scp_session = ssh_scp_new(*session, SSH_SCP_READ | SSH_SCP_RECURSIVE,
+                              dirpath);
+    if(scp_session == NULL)
+    {
+        retcode = SSH_SESSION_BADALLOC;
+        goto CLEANUP;
+    }
+
+    retval = ssh_scp_init(scp_session);
+    if(retval != SSH_OK)
+    {
+        retcode = SSH_SESSION_SCP_FAIL;
+        goto CLEANUP;
+    }
+
+    /* Loop until we reach the EOF code */
+    scp_code = ssh_scp_pull_request(scp_session);
+    while(scp_code != SSH_SCP_REQUEST_EOF)
+    {
+        if(scp_code == SSH_SCP_REQUEST_EOF)
+        {
+            break;
+        }
+        else if(scp_code == SSH_SCP_REQUEST_NEWFILE)
+        {
+            /* Open a new file */
+            tmp = ssh_scp_request_get_filename(scp_session);
+            if(tmp == NULL)
+            {
+                /* Continue on error */
+                continue;
+            }
+            else
+            {
+            
+            }
+        }
+        else if(scp_code == SSH_SCP_REQUEST_NEWDIR)
+        {
+            /* Acquire new directory name */
+
+            /* Build path for directory */
+
+            /* Call mkdir command */
+        }
+        else if(scp_code == SSH_SCP_REQUEST_ENDDIR)
+        {
+            retval = chdir("..");
+        }
+
+        /* Acquire next return code with a pull request */
+        scp_code = ssh_scp_pull_request(scp_session);
+    }
+
 CLEANUP:
-    return retval;
+    if(intern_buffer != NULL)
+    {
+        free(intern_buffer);
+        intern_buffer = NULL;
+    }
+
+    /* Close and free the session */
+    ssh_scp_close(scp_session);
+    ssh_scp_free(scp_session);
+
+    return retcode;
 }
 
 static void ssh_connection_chomp(char *buffer, int buffer_len, char delim)
