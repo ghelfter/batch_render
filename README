@@ -45,6 +45,8 @@ batch_clear.pl will clear the render directory of all files, which is useful
 if there is a botched render or if the frames have already been collected to
 another directory.
 
+Deprecated code is located in the deprecated folder.
+
 Dependencies:
   System:
     Perl
