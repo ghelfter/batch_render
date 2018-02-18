@@ -2,7 +2,7 @@ This is a batch rendering utility originally written for use in one of the
 production classes at Clemson University, for the Digital Production Arts
 program down in North Charleston, South Carolina.
 
-The project is written in the Perl programming language.
+The project is written in a mix of C, Perl and Tcl.
 
 This is the second version of the software, and has some noticeable
 improvements. The code as a whole has been cleaned up, removing a few
@@ -14,9 +14,10 @@ a shared filesystem. It may be useful to add a flag to assume a shared
 filesystem, instead of just removing it entirely.
 
 This has expanded to a couple of scripts, notably the following:
-    1) batch_render.2.pl
-    2) batch_killall.tcl
-    3) batch_clear.pl
+    1) batch_render.2.pl (Perl)
+    2) batch_killall.tcl (Tcl)
+    3) batch_clear.pl (Perl)
+    4) batch_collect (C)
 
 There is a configuration file to be placed as
 /home/batch_renderer/batch_render.json. This is local to each machine, and
@@ -53,9 +54,14 @@ Dependencies:
     tcl
     tcllib
     expect
+    gcc
 
   CPAN:
     IO::Pty
     JSON::XS
     Net::OpenSSH
     Term::ReadKey
+
+  C Libraries:
+    libcJSON
+    libssh
