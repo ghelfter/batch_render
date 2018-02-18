@@ -1,1 +1,8 @@
-This program is a utility to gather the rendered frames from the 
+This program is a utility to gather the rendered frames from the separate
+machines in the cluster, as defined in the given JSON configuration file.
+This is the final part of the utilities for my own render queue.
+
+It requires the libcJSON and libssh libraries to be installed in a manner
+that the linker can find it.
+
+This program is written in C, and requires an appropriate C compiler.
