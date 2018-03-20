@@ -154,7 +154,7 @@ sub acquire_start ($$$)
 {
     my $ind = $_[0] - 1;
     my $res = $_[2];
-    if ($ind > 0)
+    if ($ind >= 0)
     {
         $res = @{$_[1]}[int($ind)] + 1;
     }
@@ -250,7 +250,6 @@ else
     };
 
     my $json_str = load_json_file $cfg;
-    print $json_str . "\n";
 
     my $parsed_json = decode_json $json_str;
 
@@ -306,12 +305,6 @@ else
     }
 
     my $machine_count = scalar(@{$cmd_struct->{hosts}});
-    #print $machine_count . "\n";
-
-    #foreach my $elem (@{$cmd_struct->{hosts}})
-    #{
-    #    print $elem . "\n";
-    #}
 
     print "Enter password: ";
     Term::ReadKey::ReadMode('noecho');
@@ -375,15 +368,15 @@ else
             # file over to there
 
             # Open up the ssh connection, then perform the actions needed
-            my $ssh = Net::OpenSSH->new($hostname, user => $username,
-                                        password => $password);
+            #my $ssh = Net::OpenSSH->new($hostname, user => $username,
+            #                            password => $password);
 
-            die "Error connecting to host $hostname\n" if $ssh->error;
+            #die "Error connecting to host $hostname\n" if $ssh->error;
 
             # Shared filesystem
             if ($shared_filesystem)
             {
-                $ssh->system("mkdir -p $n_rdir");
+                #    $ssh->system("mkdir -p $n_rdir");
             }
             # No shared filesystem
             else
@@ -398,7 +391,7 @@ else
             #$ssh->system($cmd);
 
             # Disconnect ssh session
-            $ssh->disconnect(0);
+            #$ssh->disconnect(0);
             exit;
         }
     }
