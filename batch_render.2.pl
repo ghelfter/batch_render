@@ -6,6 +6,7 @@
 #            batch_render.2.pl
 # ****************************************
 
+# Perl standard library modules
 use strict;
 use warnings;
 use POSIX;
@@ -22,10 +23,29 @@ use JSON::XS;
 
 # Command line arguments:
 
+# Print the usage information for the script
 sub print_usage ()
 {
     print "Usage: ./batch_render.pl [start] [end] [scene_file]"
-          . " [render_directory] [render_layer] [config_file]\n";
+          . " [render_directory] [render_layer] [config_file]"
+          . " {-sf}\n";
+    print "Optional -sf flag at the end to designate the usage of a shared"
+          . " filesystem.\n";
+}
+
+sub print_help ()
+{
+    print "batch_render\n\n";
+    print "DESCRIPTION\n";
+    print "This program is part of a set of utility scripts making a"
+        . " distributed render queue. These utilities take JSON configuration"
+        . " files, and use them to distribute rendering tasks to the set of"
+        . " machines specified in them.\n\n";
+    print "This script uses SSH to connect to the specified hosts, given the"
+        . " configuration file, and executes the proper render command on each"
+        . " member of the cluster, splitting the frames amongst them.\n";
+
+    print "\nAUTHOR\nThese scripts were written by Galen Helfter.\n";
 }
 
 # Arguments
@@ -171,9 +191,13 @@ sub load_json_file ($)
     return $res;
 }
 
-if (scalar(@ARGV) < 6)
+# Begin main script functionality
+my $arg_count = 6;
+
+if (scalar(@ARGV) < $arg_count)
 {
     print_usage;
+    print_help if (scalar(@ARGV) > 0 and $ARGV[0] eq '-h');
 }
 else
 {
@@ -188,8 +212,25 @@ else
 
     my $cfg = $ARGV[5];
 
+    # Shared filesystem flag
+    my $shared_filesystem = 0;
+
     # Acquire absolute filepath
     my $scene_abs = File::Spec->rel2abs($scene_file);
+
+    # Check if given -sf flag
+    if (scalar(@ARGV) > $arg_count)
+    {
+        if ($ARGV[$arg_count] eq '-sf')
+        {
+            $shared_filesystem = 1;
+        }
+        else
+        {
+            die "If given ${arg_count} arguments, the final one must"
+                . " be the -sf flag.\n";
+        }
+    }
 
     # Login information
     print "Enter username: ";
@@ -283,16 +324,19 @@ else
     my @ranges = acquire_frame($machine_count, $start_frame, $end_frame);
 
     my @files = ();
+
     # Acquire array of maya files and copy them
     foreach my $elem (@{$cmd_struct->{hosts}})
     {
         my $tfile = create_tempfile($scene_abs, $elem);
-        #system 'cp', '-f', $scene_abs, $tfile;
+        # Copy filename in order to avoid conflicts, even with SCP
+        system 'cp', '-f', $scene_abs, $tfile;
         push @files, $tfile;
     }
 
     for my $i (0 .. $machine_count-1)
     {
+        # Fork a new process for every machine in the cluster
         my $pid = fork;
         if (not $pid)
         {
@@ -334,9 +378,25 @@ else
             my $ssh = Net::OpenSSH->new($hostname, user => $username,
                                         password => $password);
 
+            die "Error connecting to host $hostname\n" if $ssh->error;
+
+            # Shared filesystem
+            if ($shared_filesystem)
+            {
+                $ssh->system("mkdir -p $n_rdir");
+            }
+            # No shared filesystem
+            else
+            {
+                # Acquire local configuration file via SCP
+                # ssh->scp_get
+            # Transfer file over by SCP
             # ssh->scp_put
-            #$ssh->system("mkdir -p $n_rdir");
+            }
+
+            # Execute command on the machine
             #$ssh->system($cmd);
+
             # Disconnect ssh session
             $ssh->disconnect(0);
             exit;
@@ -347,5 +407,11 @@ else
     for my $i (0 .. $machine_count-1)
     {
         wait;
+    }
+
+    # Delete temporary files
+    foreach my $file (@files)
+    {
+        system 'rm', '-f', $file;
     }
 }
