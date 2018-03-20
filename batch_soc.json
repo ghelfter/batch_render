@@ -11,7 +11,6 @@
         "endflag" : "-e"
     },
     "hosts" : [
-        "Arthedain"
     ],
     "clusters" : [
         {
@@ -19,6 +18,12 @@
             "suffix" : ".fx.clemson.edu",
             "start" : 1,
             "end" : 18
+        },
+        {
+            "prefix" : "minion",
+            "suffix" : ".fx.clemson.edu",
+            "start" : 21,
+            "end" : 22
         }
     ]
 }

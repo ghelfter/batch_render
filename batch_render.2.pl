@@ -68,7 +68,8 @@ sub create_tempfile ($$)
 #   3) End frame
 #   4) Render directory
 #   5) Scene file
-sub maya_build_command ($$$$$)
+#   6) Render layer
+sub maya_build_command ($$$$$$)
 {
     my $cmd = $_[0]->{command};
 
@@ -80,6 +81,9 @@ sub maya_build_command ($$$$$)
 
     # Add render directory
     $cmd .= (" -rd " . $_[3]);
+
+    # Add render layer
+    #$cmd .= (" -rl " . $_[5]);
 
     # Add start number
     $cmd .= (' ' . $_[0]->{startflag} . ' ' . $_[1]);
@@ -349,7 +353,7 @@ else
                 $n_rdir = $rd_abs . '/' . $hostname;
 
                 $cmd = maya_build_command($cmd_struct, $n_start, $n_end,
-                                          $n_rdir, $file);
+                                          $n_rdir, $file, $rl);
             }
             elsif ($cmd_struct->{renderer} eq 'blender')
             {
