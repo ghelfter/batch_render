@@ -12,7 +12,10 @@
 #include <string.h>
 
 #include <sys/stat.h>
+#include <sys/wait.h>
+
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <libssh/libssh.h>
 #include <cjson/cJSON.h>
@@ -30,7 +33,7 @@ char* construct_machine_name(const char *prefix, const char *suffix, int n);
 int main(int argc, char **argv)
 {
     int retcode = 0;
-    int i = 0;
+    int i = 0, j = 0;
     int ssh_retval = 0;
     ssh_session session = NULL;
     char *buffer = NULL;
@@ -60,6 +63,8 @@ int main(int argc, char **argv)
     struct cJSON *t2 = NULL;
 
     struct stat st;
+
+    pid_t pid = 0;
 
     /* Clear host list */
     memset(host_list, 0x00, sizeof(char*) * num_hosts);
@@ -220,51 +225,67 @@ int main(int argc, char **argv)
     config_cluster = NULL;
     config_clusters = NULL;
 
-    /*
-     *  ------------------------------
-     *  NOTE - put this inside of a loop
-     *  ------------------------------
-     **/
-
-    /* Use current machine just to test */
-    ssh_retval = instantiate_ssh_connection(&session, "Arthedain");
-    if(ssh_retval != SSH_SESSION_GOOD)
+    for(i = 0; i < num_hosts; ++i)
     {
-        retcode = 1;
-        goto CLEANUP;
-    }
-
-    ssh_retval = scp_read_json_file(&session,
+        /* Fork the process for each of the different SSH connections */
+        pid = fork();
+        if (pid == 0)
+        {
+            /* Use current machine just to test */
+            ssh_retval = instantiate_ssh_connection(&session, "Arthedain");
+            if(ssh_retval != SSH_SESSION_GOOD)
+            {
+                retcode = 1;
+                goto CLEANUP;
+            }
+            ssh_retval = scp_read_json_file(&session,
                                     "/home/batch_renderer/batch_render.json",
-                                    &buffer,
-                                    &buffer_len);
-    if(ssh_retval != SSH_SESSION_GOOD)
-    {
-        retcode = 1;
-        goto CLEANUP;
-    }
+                                    &buffer, &buffer_len);
 
-    /* Acquire render directory from the host */
-    local_config = cJSON_Parse(buffer);
-    if(local_config == NULL)
-    {
-        fprintf(stderr, "Failed to parse hoost JSON file.\n");
-        retcode = 1;
-        goto CLEANUP;
-    }
+            if(ssh_retval != SSH_SESSION_GOOD)
+            {
+                retcode = 1;
+                goto CLEANUP;
+            }
 
-    t1 = NULL;
-    t1 = cJSON_GetObjectItemCaseSensitive(local_config, "render_directory");
-    if(t1 == NULL || !cJSON_IsString(t1))
-    {
-        fprintf(stderr, "Host JSON file does not fit standard.\n");
-        retcode = 1;
-        goto CLEANUP;
-    }
+            /* Acquire render directory from the host */
+            local_config = cJSON_Parse(buffer);
+            if(local_config == NULL)
+            {
+                fprintf(stderr, "Failed to parse hoost JSON file.\n");
+                retcode = 1;
+                goto CLEANUP;
+            }
 
-    fprintf(stdout, "Render directory: %s\n", t1->valuestring);
+            t1 = NULL;
+            t1 = cJSON_GetObjectItemCaseSensitive(local_config,
+                                                  "render_directory");
+            if(t1 == NULL || !cJSON_IsString(t1))
+            {
+                fprintf(stderr, "Host JSON file does not fit standard.\n");
+                retcode = 1;
+                goto CLEANUP;
+            }
+
+            fprintf(stdout, "Render directory: %s\n", t1->valuestring);
+        }
+        /* Failure to fork */
+        else if(pid < 0)
+        {
+            break;
+        }
+    }
+    /* Have the parent process wait on the remaining child processes */
+    if(pid > 0)
+    {
+        for(j = 0; j < i; ++j)
+        {
+            wait(&retcode);
+        }
+    }
 
 CLEANUP:
+
     if(ssh_retval != SSH_SESSION_GOOD)
     {
         ssh_connection_print_error(ssh_retval);

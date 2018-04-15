@@ -348,6 +348,7 @@ else
             my $cmd = '';
             my $n_rdir = '';
 
+            # Commmand information for rendering via the Maya command line
             if ($cmd_struct->{renderer} eq 'maya')
             {
                 $n_rdir = $rd_abs . '/' . $hostname;
@@ -355,11 +356,19 @@ else
                 $cmd = maya_build_command($cmd_struct, $n_start, $n_end,
                                           $n_rdir, $file, $rl);
             }
+            # Command information for rendering with Blender over command line
             elsif ($cmd_struct->{renderer} eq 'blender')
             {
                 $n_rdir = $rd_abs;
                 $cmd = blender_build_command($cmd_struct, $n_start, $n_end,
                                              $n_rdir, $file);
+            }
+            # Generate the command for running substance designer over command line
+            # TODO Currently is not implemented - will have to check for support
+            # and acquire the proper knowledge of how to do this over and how
+            # to access designer over the command line
+            elsif ($cmd_struct->{renderer} eq 'substance_designer')
+            {
             }
             print $cmd . "\n";
 

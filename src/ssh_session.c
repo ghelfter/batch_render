@@ -242,7 +242,7 @@ int scp_copy_directory(ssh_session *session, const char *dirpath,
     int retval = 0;
     int scp_code = 0;
     char *intern_buffer = NULL;
-    char *tmp = NULL;
+    const char *tmp = NULL;
     ssh_scp scp_session = NULL;
 
     if(session == NULL || dirpath == NULL || result_dirpath == NULL)
